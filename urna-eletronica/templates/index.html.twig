@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111b22" />
+    <meta name="description" content="Simulação local e acessível de uma urna digital." />
+    <title>Urna Digital — Simulação</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/script.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand-lockup" href="/" aria-label="Urna Digital — início">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><i></i>
+          </span>
+          <span class="brand-copy">
+            <span class="eyebrow">DEMONSTRAÇÃO LOCAL</span>
+            <span class="wordmark">URNA <b>DIGITAL</b></span>
+          </span>
+        </a>
+        <div class="topbar-meta" aria-label="Estado da conexão">
+          <span class="online-indicator" aria-hidden="true"></span>
+          <span>SEM CONEXÃO EXTERNA</span>
+          <span class="meta-slash" aria-hidden="true">/</span>
+          <span>PROTOCOLO 01</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="guide-column" aria-labelledby="guide-title">
+          <div class="guide-kicker"><span>01</span><span>SIMULAÇÃO GUIADA</span></div>
+          <h1 id="guide-title">Seu voto.<br /><em>Seu ritmo.</em></h1>
+          <p class="lede">
+            Explore o fluxo de uma urna digital com um código de demonstração.
+            Nada é enviado, salvo ou contado.
+          </p>
+
+          <div class="step-list" aria-label="Etapas da demonstração">
+            <div class="step-item is-active" data-step="1">
+              <span class="step-number">01</span>
+              <span class="step-content"><strong>DIGITE</strong><small>Informe o código no teclado.</small></span>
+            </div>
+            <div class="step-item" data-step="2">
+              <span class="step-number">02</span>
+              <span class="step-content"><strong>CONFIRA</strong><small>Revise a escolha na tela.</small></span>
+            </div>
+            <div class="step-item" data-step="3">
+              <span class="step-number">03</span>
+              <span class="step-content"><strong>CONFIRME</strong><small>Conclua o fluxo simulado.</small></span>
+            </div>
+          </div>
+
+          <div class="legend-card">
+            <span class="legend-dot" aria-hidden="true"></span>
+            <span><strong>AMBIENTE SEGURO</strong><small>Os dados desaparecem ao atualizar a página.</small></span>
+          </div>
+        </section>
+
+        <section class="machine" aria-label="Urna digital de demonstração">
+          <div class="machine-topline"><span>MODELO D-01</span><span>ESTAÇÃO DE TREINO</span></div>
+          <div class="machine-body">
+            <div class="screen-bezel">
+              <div class="screen-header">
+                <span class="screen-led" aria-hidden="true"></span>
+                <span>VOTAÇÃO SIMULADA</span>
+                <span class="status-code" id="screenStatusCode">AGUARDANDO</span>
+              </div>
+              <div class="screen-surface" id="screenSurface">
+                <div class="screen-crumb">ELEIÇÃO DEMONSTRATIVA <span aria-hidden="true">/</span> CARGO DEMO</div>
+                <div class="screen-main">
+                  <div class="screen-copy">
+                    <span class="screen-overline" id="screenOverline">CARGO DE DEMONSTRAÇÃO</span>
+                    <h2 id="screenTitle">Digite o código<br />do candidato</h2>
+                    <p id="screenHint">Use o teclado numérico para começar.<br />Experimente <b>13</b>, <b>22</b> ou <b>45</b>.</p>
+                  </div>
+                  <div class="digit-row" id="digitRow" role="group" aria-label="Nenhum número digitado"></div>
+                  <div class="candidate-card" id="candidateCard" hidden>
+                    <span class="candidate-label" id="candidateLabel">CANDIDATO DE DEMONSTRAÇÃO</span>
+                    <strong class="candidate-name" id="candidateName"></strong>
+                    <span class="candidate-party" id="candidateParty"></span>
+                  </div>
+                  <div class="screen-helper" id="screenHelper"><span class="helper-mark" aria-hidden="true">↳</span><span>Você está no modo de entrada</span></div>
+                </div>
+                <div class="screen-footer"><span id="screenModeLabel">ENTRADA</span><span aria-hidden="true">•</span><span>SIMULAÇÃO LOCAL</span></div>
+              </div>
+            </div>
+
+            <div class="control-deck">
+              <div class="deck-header"><span>CONTROLE DE VOTAÇÃO</span><span class="deck-count" id="entryCounter">0 / 2</span></div>
+              <div class="keypad-area">
+                <div class="keypad-meta"><span>TECLADO NUMÉRICO</span><span class="mini-label">TOQUE OU CLIQUE</span></div>
+                <div class="keypad-grid" id="keypad" aria-label="Teclado numérico">
+                  <button class="number-key" type="button" data-digit="1" aria-label="Número 1">1</button>
+                  <button class="number-key" type="button" data-digit="2" aria-label="Número 2">2</button>
+                  <button class="number-key" type="button" data-digit="3" aria-label="Número 3">3</button>
+                  <button class="number-key" type="button" data-digit="4" aria-label="Número 4">4</button>
+                  <button class="number-key" type="button" data-digit="5" aria-label="Número 5">5</button>
+                  <button class="number-key" type="button" data-digit="6" aria-label="Número 6">6</button>
+                  <button class="number-key" type="button" data-digit="7" aria-label="Número 7">7</button>
+                  <button class="number-key" type="button" data-digit="8" aria-label="Número 8">8</button>
+                  <button class="number-key" type="button" data-digit="9" aria-label="Número 9">9</button>
+                  <button class="number-key number-key-wide" type="button" data-digit="0" aria-label="Número 0">0</button>
+                </div>
+                <div class="action-row">
+                  <button class="action-button action-correct" id="correctButton" type="button">
+                    <span class="action-icon" aria-hidden="true">←</span><span><b>Corrige</b><small>limpar</small></span>
+                  </button>
+                  <button class="action-button action-blank" id="blankButton" type="button">
+                    <span class="action-icon" aria-hidden="true">□</span><span><b>Branco</b><small>selecionar</small></span>
+                  </button>
+                  <button class="action-button action-confirm" id="confirmButton" type="button" disabled>
+                    <span class="action-icon" aria-hidden="true">✓</span><span><b>Confirma</b><small>finalizar</small></span>
+                  </button>
+                </div>
+              </div>
+              <div class="deck-foot"><span>ATALHOS</span><span><kbd>0–9</kbd> digitar&nbsp;&nbsp; <kbd>⌫</kbd> corrigir&nbsp;&nbsp; <kbd>ENTER</kbd> confirmar</span></div>
+            </div>
+          </div>
+          <div class="machine-footer"><span class="machine-screw" aria-hidden="true"></span><span>SIMULAÇÃO SEM ARMAZENAMENTO</span><span class="machine-screw" aria-hidden="true"></span></div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span>INTERFACE DE APRENDIZADO</span>
+        <span class="footer-rule" aria-hidden="true"></span>
+        <span>FUNCIONA 100% NO SEU NAVEGADOR</span>
+      </footer>
+    </div>
+    <div class="sr-only" id="liveRegion" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>
