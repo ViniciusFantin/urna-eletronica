@@ -1,18 +1,19 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Admin;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-class UrnaController extends AbstractController
+#[Route('/admin')]
+#[IsGranted('ROLE_ADMIN')]
+class DashboardController extends AbstractController
 {
-    #[Route('/', name: 'app_urna', methods: ['GET'])]
-    #[IsGranted('ROLE_ELEITOR')]
+    #[Route('', name: 'admin_dashboard', methods: ['GET'])]
     public function index(): Response
     {
-        return $this->render('index.html.twig');
+        return $this->render('admin/dashboard.html.twig');
     }
 }

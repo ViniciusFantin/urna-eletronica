@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do Mesário</title>
+</head>
+<body>
+    <h1>Painel do Mesário</h1>
+
+    <p>Bem-vindo, {{ app.user.nome }}!</p>
+
+    <a href="{{ path('app_urna') }}">Acessar urna</a>
+
+    <p>
+        Em breve: cadastro de candidatos e auditoria.
+    </p>
+
+    <form method="post" action="{{ path('app_logout') }}">
+        <input
+            type="hidden"
+            name="_csrf_token"
+            value="{{ csrf_token('logout') }}"
+        >
+        <button type="submit">Sair</button>
+    </form>
+</body>
+</html>

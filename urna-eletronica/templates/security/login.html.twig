@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Urna Digital</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f1ed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #111b22;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 430px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: #ffffff;
+            padding: 42px;
+            border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 30px;
+        }
+
+        .logo span {
+            color: #168c7d;
+        }
+
+        h1 {
+            font-size: 27px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #69777d;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #d7dcde;
+            border-radius: 7px;
+            font-size: 15px;
+            margin-bottom: 22px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #168c7d;
+            box-shadow: 0 0 0 3px rgba(22, 140, 125, 0.12);
+        }
+
+        .login-button {
+            width: 100%;
+            background: #168c7d;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            padding: 15px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .login-button:hover {
+            background: #116e63;
+        }
+
+        .error {
+            background: #fff0f0;
+            color: #a52a2a;
+            padding: 13px;
+            border-radius: 7px;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            color: #899397;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card">
+
+            <div class="logo">
+                URNA <span>DIGITAL</span>
+            </div>
+
+            <h1>Bem-vindo!</h1>
+
+            <p class="subtitle">
+                Identifique-se para acessar o sistema
+                de votação eletrônica.
+            </p>
+
+            {% if error %}
+                <div class="error" role="alert">
+                    Título de eleitor ou senha inválidos.
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ path('app_login') }}">
+
+                <label for="username">
+                    Título de eleitor
+                </label>
+
+                <input
+                    type="text"
+                    id="username"
+                    name="_username"
+                    value="{{ last_username }}"
+                    placeholder="Digite seu título de eleitor"
+                    maxlength="20"
+                    autocomplete="username"
+                    required
+                >
+
+                <label for="password">
+                    Senha
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="_password"
+                    placeholder="Digite sua senha"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value="{{ csrf_token('authenticate') }}"
+                >
+
+                <button type="submit" class="login-button">
+                    Entrar no sistema
+                </button>
+
+            </form>
+        </div>
+
+        <div class="footer">
+            SISTEMA DE VOTAÇÃO SEGURO · PROJETO ACADÊMICO
+        </div>
+    </div>
+</body>
+</html>
