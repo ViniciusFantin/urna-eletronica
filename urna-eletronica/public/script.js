@@ -1,14 +1,18 @@
+
 (() => {
   'use strict';
 
+  const config = window.URNA_CONFIG || {};
+  const candidates = config.candidates || {};
   const MAX_DIGITS = 2;
-  const candidates = {
-    '13': { name: 'Ana Silva', party: 'LISTA VERDE · 13' },
-    '22': { name: 'Bruno Costa', party: 'MOVIMENTO CIDADE · 22' },
-    '45': { name: 'Carla Mendes', party: 'FRENTE ABERTA · 45' }
+
+  const state = {
+    digits: '',
+    mode: 'input',
+    error: '',
+    sending: false
   };
 
-  const state = { digits: '', mode: 'input' };
   const els = {
     digitRow: document.querySelector('#digitRow'),
     candidateCard: document.querySelector('#candidateCard'),
@@ -31,156 +35,357 @@
     stepItems: [...document.querySelectorAll('.step-item')]
   };
 
-  function announce(message) {
-    els.liveRegion.textContent = '';
-    window.setTimeout(() => { els.liveRegion.textContent = message; }, 20);
+  if (!els.keypad || !els.confirmButton) {
+    return;
   }
 
-  function setMode(mode) {
-    state.mode = mode;
+  // Eleitores e mesários podem votar.
+  // O bloqueio depende somente do estado da eleição
+  // e da participação anterior do usuário.
+  const locked = () =>
+    state.mode === 'confirmed' ||
+    state.sending ||
+    config.status !== 'ABERTA' ||
+    config.hasVoted;
+
+  function announce(message) {
+    if (els.liveRegion) {
+      els.liveRegion.textContent = message;
+    }
   }
 
   function addDigit(digit) {
-    if (state.mode === 'confirmed') return;
-    if (state.mode === 'blank') setMode('input');
+    if (locked()) return;
+
+    if (state.mode === 'blank') {
+      state.mode = 'input';
+    }
+
     if (state.digits.length >= MAX_DIGITS) {
-      announce('Limite de dois dígitos atingido. Confira sua escolha ou use Corrige.');
       return;
     }
+
     state.digits += digit;
-    setMode(state.digits.length === MAX_DIGITS ? 'review' : 'input');
+
+    state.mode =
+      state.digits.length === MAX_DIGITS
+        ? 'review'
+        : 'input';
+
+    state.error = '';
+
     render();
-    announce(state.digits.length === MAX_DIGITS ? 'Código preenchido. Confira a escolha antes de confirmar.' : `Número ${digit} inserido.`);
   }
 
   function correct() {
-    const hadSelection = state.digits.length > 0 || state.mode === 'blank' || state.mode === 'confirmed';
+    if (locked()) return;
+
     state.digits = '';
-    setMode('input');
+    state.mode = 'input';
+    state.error = '';
+
     render();
-    announce(hadSelection ? 'Entrada corrigida. Digite um novo código.' : 'A entrada já está vazia.');
   }
 
   function chooseBlank() {
-    if (state.mode === 'confirmed') return;
+    if (locked()) return;
+
     state.digits = '';
-    setMode('blank');
+    state.mode = 'blank';
+    state.error = '';
+
     render();
-    announce('Voto em branco selecionado. Pressione Confirma para concluir a simulação.');
   }
 
-  function confirm() {
-    if (state.mode === 'blank') {
-      setMode('confirmed');
-      render();
-      announce('Voto em branco confirmado. Demonstração concluída.');
+  async function confirmVote() {
+    if (locked()) return;
+
+    const selection =
+      state.mode === 'blank'
+        ? 'BRANCO'
+        : state.digits;
+
+    if (
+      selection !== 'BRANCO' &&
+      !(
+        selection.length === MAX_DIGITS &&
+        candidates[selection]
+      )
+    ) {
       return;
     }
-    const candidate = candidates[state.digits];
-    if (state.digits.length !== MAX_DIGITS || !candidate) {
-      announce('Escolha um código de demonstração válido: 13, 22 ou 45.');
-      els.screenSurface.classList.add('shake');
-      window.setTimeout(() => els.screenSurface.classList.remove('shake'), 360);
-      return;
-    }
-    setMode('confirmed');
+
+    state.sending = true;
+    state.error = '';
+
     render();
-    announce(`Voto simulado para ${candidate.name} confirmado. Demonstração concluída.`);
+
+    try {
+      const response = await fetch(config.voteUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': config.csrf
+        },
+        body: JSON.stringify({
+          numero: selection
+        })
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(
+          payload.erro ||
+          'Não foi possível registrar seu voto.'
+        );
+      }
+
+      state.mode = 'confirmed';
+      config.hasVoted = true;
+
+      announce(
+        'Voto registrado. Obrigado pela participação.'
+      );
+
+    } catch (error) {
+      state.error =
+        error.message ||
+        'Falha de conexão. Verifique antes de tentar novamente.';
+
+      announce(state.error);
+
+    } finally {
+      state.sending = false;
+      render();
+    }
   }
 
   function renderDigits() {
     if (state.mode === 'blank') {
-      els.digitRow.innerHTML = '<span class="blank-display">VOTO EM BRANCO</span>';
-      els.digitRow.setAttribute('aria-label', 'Voto em branco selecionado');
-      return;
+      els.digitRow.innerHTML =
+        '<span class="blank-display">VOTO EM BRANCO</span>';
+    } else {
+      els.digitRow.innerHTML = Array.from(
+        { length: MAX_DIGITS },
+        (_, i) => {
+          const digit = state.digits[i] || '';
+
+          return `
+            <span
+              class="digit-slot ${digit ? 'is-filled' : ''}"
+              aria-hidden="true"
+            >
+              ${digit}
+            </span>
+          `;
+        }
+      ).join('');
     }
-    els.digitRow.innerHTML = Array.from({ length: MAX_DIGITS }, (_, index) => {
-      const digit = state.digits[index] || '';
-      return `<span class="digit-slot ${digit ? 'is-filled' : ''}" aria-hidden="true">${digit}</span>`;
-    }).join('');
-    els.digitRow.setAttribute('aria-label', state.digits ? `Código digitado: ${state.digits}` : 'Nenhum número digitado');
+
+    els.digitRow.setAttribute(
+      'aria-label',
+      state.digits
+        ? `Código digitado: ${state.digits}`
+        : 'Sem dígitos'
+    );
   }
 
   function renderCandidate() {
     const candidate = candidates[state.digits];
-    const hasFullCode = state.digits.length === MAX_DIGITS;
-    const showCard = state.mode !== 'blank' && state.mode !== 'confirmed' && hasFullCode;
-    els.candidateCard.hidden = !showCard;
-    els.candidateCard.classList.toggle('is-unknown', showCard && !candidate);
+    const show = state.mode === 'review';
+
+    els.candidateCard.hidden = !show;
+
+    els.candidateCard.classList.toggle(
+      'is-unknown',
+      show && !candidate
+    );
+
     if (candidate) {
-      els.candidateLabel.textContent = 'CANDIDATO DE DEMONSTRAÇÃO';
+      els.candidateLabel.textContent = 'CANDIDATO';
       els.candidateName.textContent = candidate.name;
       els.candidateParty.textContent = candidate.party;
-    } else if (showCard) {
-      els.candidateLabel.textContent = 'CÓDIGO NÃO RECONHECIDO';
-      els.candidateName.textContent = 'Nenhum resultado';
-      els.candidateParty.textContent = 'USE 13 · 22 · 45 PARA CONTINUAR';
+
+    } else if (show) {
+      els.candidateLabel.textContent =
+        'NÚMERO NÃO RECONHECIDO';
+
+      els.candidateName.textContent =
+        'Nenhum candidato';
+
+      els.candidateParty.textContent =
+        'PRESSIONE CORRIGE';
     }
   }
 
   function renderCopy() {
     const candidate = candidates[state.digits];
-    const validCandidate = Boolean(candidate && state.digits.length === MAX_DIGITS);
-    const confirmedCandidate = state.mode === 'confirmed' && validCandidate;
 
-    els.screenSurface.classList.toggle('is-confirmed', state.mode === 'confirmed');
-    els.screenSurface.classList.toggle('is-blank', state.mode === 'blank');
+    els.screenSurface.classList.toggle(
+      'is-confirmed',
+      state.mode === 'confirmed'
+    );
 
-    if (state.mode === 'confirmed') {
-      els.screenOverline.textContent = 'DEMONSTRAÇÃO CONCLUÍDA';
-      els.screenTitle.innerHTML = confirmedCandidate ? 'Voto confirmado.' : 'Voto em branco<br />confirmado.';
-      els.screenHint.innerHTML = confirmedCandidate ? `Registro simulado para <b>${candidate.name}</b>.<br />Nenhum dado foi enviado ou armazenado.` : 'Nenhum dado foi enviado ou armazenado.<br />A demonstração pode ser reiniciada.';
-      els.screenHelper.innerHTML = '<span class="helper-mark" aria-hidden="true">✓</span><span>Fluxo encerrado com sucesso</span>';
-      els.screenModeLabel.textContent = 'CONCLUÍDO';
-      els.screenStatusCode.textContent = 'FINALIZADO';
-      return;
-    }
+    els.screenSurface.classList.toggle(
+      'is-blank',
+      state.mode === 'blank'
+    );
 
-    if (state.mode === 'blank') {
-      els.screenOverline.textContent = 'SELEÇÃO MANUAL';
+    els.screenHelper.textContent = state.error || '';
+
+    if (
+      state.mode === 'confirmed' ||
+      config.hasVoted
+    ) {
+      els.screenOverline.textContent =
+        'REGISTRO CONCLUÍDO';
+
+      els.screenTitle.textContent =
+        'Voto registrado.';
+
+      els.screenHint.textContent =
+        'Sua participação foi registrada. Sua escolha não é exibida aqui.';
+
+      els.screenModeLabel.textContent =
+        'CONCLUÍDO';
+
+      els.screenStatusCode.textContent =
+        'FINALIZADO';
+
+    } else if (config.status !== 'ABERTA') {
+      els.screenOverline.textContent =
+        'ELEIÇÃO ' + config.status;
+
+      els.screenTitle.textContent =
+        config.status === 'ENCERRADA'
+          ? 'Votação encerrada'
+          : 'Aguarde a abertura';
+
+      els.screenHint.textContent =
+        'O mesário controla o período de votação.';
+
+      els.screenModeLabel.textContent =
+        'AGUARDANDO';
+
+      els.screenStatusCode.textContent =
+        config.status;
+
+    } else if (state.sending) {
+      els.screenOverline.textContent =
+        'GRAVAÇÃO PROTEGIDA';
+
+      els.screenTitle.textContent =
+        'Registrando voto...';
+
+      els.screenHint.textContent =
+        'Aguarde a confirmação do servidor. Não feche esta página.';
+
+      els.screenModeLabel.textContent =
+        'PROCESSANDO';
+
+      els.screenStatusCode.textContent =
+        'ENVIANDO';
+
+    } else if (state.mode === 'blank') {
+      els.screenOverline.textContent = 'REVISÃO';
       els.screenTitle.textContent = 'Voto em branco';
-      els.screenHint.innerHTML = 'Nenhum candidato será selecionado.<br />Confirme para concluir a simulação.';
-      els.screenHelper.innerHTML = '<span class="helper-mark" aria-hidden="true">↳</span><span>Revise e pressione Confirma</span>';
+
+      els.screenHint.textContent =
+        'Pressione Confirma para registrar seu voto em branco.';
+
       els.screenModeLabel.textContent = 'REVISÃO';
       els.screenStatusCode.textContent = 'REVISAR';
-      return;
-    }
 
-    if (state.mode === 'review') {
-      els.screenOverline.textContent = candidate ? 'CANDIDATO LOCALIZADO' : 'CÓDIGO DE DEMONSTRAÇÃO';
-      els.screenTitle.innerHTML = candidate ? 'Confira sua<br />escolha' : 'Código não<br />reconhecido';
-      els.screenHint.innerHTML = candidate ? 'Se estiver correto, pressione <b>Confirma</b>.<br />Para trocar, pressione <b>Corrige</b>.' : 'Use um dos códigos disponíveis:<br /><b>13</b>, <b>22</b> ou <b>45</b>.';
-      els.screenHelper.innerHTML = `<span class="helper-mark" aria-hidden="true">${candidate ? '↳' : '!'}</span><span>${candidate ? 'Aguardando confirmação' : 'Corrija a entrada para continuar'}</span>`;
+    } else if (state.mode === 'review') {
+      els.screenOverline.textContent =
+        candidate
+          ? 'CANDIDATO LOCALIZADO'
+          : 'NÚMERO INVÁLIDO';
+
+      els.screenTitle.textContent =
+        candidate
+          ? 'Confira sua escolha'
+          : 'Não localizado';
+
+      els.screenHint.textContent =
+        candidate
+          ? 'Confirme para registrar o voto ou pressione Corrige.'
+          : 'Pressione Corrige e informe um número cadastrado.';
+
       els.screenModeLabel.textContent = 'REVISÃO';
-      els.screenStatusCode.textContent = candidate ? 'REVISAR' : 'ATENÇÃO';
-      return;
-    }
 
-    els.screenOverline.textContent = 'CARGO DE DEMONSTRAÇÃO';
-    els.screenTitle.innerHTML = state.digits ? 'Continue<br />digitando' : 'Digite o código<br />do candidato';
-    els.screenHint.innerHTML = state.digits ? 'Falta um dígito para localizar<br />o candidato de demonstração.' : 'Use o teclado numérico para começar.<br />Experimente <b>13</b>, <b>22</b> ou <b>45</b>.';
-    els.screenHelper.innerHTML = '<span class="helper-mark" aria-hidden="true">↳</span><span>Você está no modo de entrada</span>';
-    els.screenModeLabel.textContent = 'ENTRADA';
-    els.screenStatusCode.textContent = 'AGUARDANDO';
+      els.screenStatusCode.textContent =
+        candidate ? 'REVISAR' : 'ATENÇÃO';
+
+    } else {
+      els.screenOverline.textContent = 'VOTAÇÃO';
+
+      els.screenTitle.textContent =
+        state.digits
+          ? 'Continue digitando'
+          : 'Digite o número do candidato';
+
+      els.screenHint.textContent =
+        'Use o teclado para informar dois dígitos ou escolha Branco.';
+
+      els.screenModeLabel.textContent = 'ENTRADA';
+      els.screenStatusCode.textContent = 'AGUARDANDO';
+    }
   }
 
   function renderControls() {
-    const candidate = candidates[state.digits];
-    const canConfirm = state.mode === 'blank' || (state.mode === 'review' && Boolean(candidate));
-    els.confirmButton.disabled = !canConfirm;
-    els.entryCounter.textContent = state.mode === 'blank' ? 'BRANCO' : `${state.digits.length} / ${MAX_DIGITS}`;
-    els.keypad.querySelectorAll('.number-key').forEach((button) => {
-      button.disabled = state.mode === 'confirmed';
-    });
-    els.blankButton.disabled = state.mode === 'confirmed';
+    const disabled = locked();
+
+    els.confirmButton.disabled =
+      disabled ||
+      !(
+        state.mode === 'blank' ||
+        (
+          state.mode === 'review' &&
+          !!candidates[state.digits]
+        )
+      );
+
+    els.correctButton.disabled = disabled;
+    els.blankButton.disabled = disabled;
+
+    els.keypad
+      .querySelectorAll('.number-key')
+      .forEach(button => {
+        button.disabled = disabled;
+      });
+
+    els.entryCounter.textContent =
+      state.mode === 'blank'
+        ? 'BRANCO'
+        : `${state.digits.length} / ${MAX_DIGITS}`;
   }
 
   function renderSteps() {
-    const currentStep = state.mode === 'confirmed' ? 3 : (state.mode === 'review' || state.mode === 'blank' ? 2 : 1);
-    els.stepItems.forEach((item) => {
+    const current =
+      state.mode === 'confirmed' || config.hasVoted
+        ? 3
+        : (
+          state.mode === 'review' ||
+          state.mode === 'blank'
+            ? 2
+            : 1
+        );
+
+    els.stepItems.forEach(item => {
       const step = Number(item.dataset.step);
-      item.classList.toggle('is-active', step === currentStep);
-      item.classList.toggle('is-done', step < currentStep);
+
+      item.classList.toggle(
+        'is-active',
+        step === current
+      );
+
+      item.classList.toggle(
+        'is-done',
+        step < current
+      );
     });
   }
 
@@ -192,24 +397,52 @@
     renderSteps();
   }
 
-  els.keypad.addEventListener('click', (event) => {
+  els.keypad.addEventListener('click', event => {
     const button = event.target.closest('[data-digit]');
-    if (button) addDigit(button.dataset.digit);
-  });
-  els.correctButton.addEventListener('click', correct);
-  els.blankButton.addEventListener('click', chooseBlank);
-  els.confirmButton.addEventListener('click', confirm);
 
-  document.addEventListener('keydown', (event) => {
+    if (button) {
+      addDigit(button.dataset.digit);
+    }
+  });
+
+  els.correctButton.addEventListener(
+    'click',
+    correct
+  );
+
+  els.blankButton.addEventListener(
+    'click',
+    chooseBlank
+  );
+
+  els.confirmButton.addEventListener(
+    'click',
+    confirmVote
+  );
+
+  document.addEventListener('keydown', event => {
+    const target = event.target;
+
+    if (
+      target?.closest(
+        'input, textarea, select, button, a, [role="dialog"], [contenteditable="true"]'
+      )
+    ) {
+      return;
+    }
+
     if (/^\d$/.test(event.key)) {
       event.preventDefault();
       addDigit(event.key);
+
     } else if (event.key === 'Backspace') {
       event.preventDefault();
       correct();
+
     } else if (event.key === 'Enter') {
       event.preventDefault();
-      confirm();
+      confirmVote();
+
     } else if (event.key === 'Escape') {
       event.preventDefault();
       correct();

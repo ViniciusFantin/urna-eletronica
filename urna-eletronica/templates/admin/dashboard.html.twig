@@ -1,0 +1,307 @@
+
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel do Mesário — Urna Digital</title>
+  <link rel="stylesheet" href="{{ asset('dashboard.css') }}?v=4">
+</head>
+<body>
+<div class="dashboard-shell">
+  <header class="dashboard-topbar">
+    <a class="dashboard-logo" href="{{ path('admin_dashboard') }}">
+      URNA <span>DIGITAL</span><small> / ADMIN</small>
+    </a>
+
+    <div class="dashboard-top-actions">
+      <span class="dashboard-user">{{ app.user.nome }}</span>
+
+      <a class="dashboard-nav" href="{{ path('app_urna') }}">
+        Acessar urna
+      </a>
+
+      <a class="dashboard-nav" href="{{ path('admin_registrar') }}">
+        + Registrar
+      </a>
+
+      <form method="post" action="{{ path('app_logout') }}">
+        <input
+          type="hidden"
+          name="_csrf_token"
+          value="{{ csrf_token('logout') }}"
+        >
+
+        <button class="dashboard-logout" type="submit">
+          Sair
+        </button>
+      </form>
+    </div>
+  </header>
+
+  <main>
+    <section class="dashboard-hero">
+      <div>
+        <div class="dashboard-eyebrow">
+          ADMINISTRAÇÃO ELEITORAL / PAINEL 01
+        </div>
+
+        <h1>Controle da <em>eleição.</em></h1>
+
+        <p>
+          Gerencie as candidaturas, abra e encerre a votação
+          e acompanhe a participação com sigilo das escolhas.
+        </p>
+      </div>
+
+      <span class="dashboard-status status-{{ statusEleicao|lower }}">
+        {{ statusEleicao }}
+      </span>
+    </section>
+
+    {% for tipo in ['success', 'error'] %}
+      {% for mensagem in app.flashes(tipo) %}
+        <div
+          class="dashboard-alert dashboard-alert-{{ tipo }}"
+          role="alert"
+        >
+          {{ mensagem }}
+        </div>
+      {% endfor %}
+    {% endfor %}
+
+    <section class="dashboard-stats" aria-label="Indicadores">
+      <div class="dashboard-stat">
+        <span>ELEITORES HABILITADOS</span>
+        <strong>{{ totalEleitores }}</strong>
+        <small>Contas de eleitor</small>
+      </div>
+
+      <div class="dashboard-stat">
+        <span>PARTICIPAÇÕES REGISTRADAS</span>
+        <strong>{{ participantes }}</strong>
+        <small>Sem identificação da escolha</small>
+      </div>
+
+      <div class="dashboard-stat">
+        <span>CANDIDATOS</span>
+        <strong>{{ candidatos|length }}</strong>
+        <small>Disponíveis na eleição</small>
+      </div>
+    </section>
+
+    <section class="dashboard-main-grid">
+      <article class="dashboard-panel">
+        <div class="dashboard-panel-head">
+          <span class="dashboard-eyebrow">01 / CONTROLE</span>
+          <h2>Estado da votação</h2>
+        </div>
+
+        {% if statusEleicao == 'PENDENTE' %}
+          <p>
+            A votação ainda não começou.
+            Cadastre os candidatos antes de abrir.
+          </p>
+
+          <form
+            method="post"
+            action="{{ path('admin_eleicao_abrir') }}"
+          >
+            <input
+              type="hidden"
+              name="_csrf_token"
+              value="{{ csrf_token('eleicao_abrir') }}"
+            >
+
+            <button
+              class="dashboard-primary"
+              type="submit"
+              {% if candidatos is empty %}disabled{% endif %}
+            >
+              Abrir votação →
+            </button>
+          </form>
+
+        {% elseif statusEleicao == 'ABERTA' %}
+          <p>
+            A urna está recebendo votos.
+            Após encerrar, você poderá preparar
+            uma nova votação acadêmica.
+          </p>
+
+          <form
+            method="post"
+            action="{{ path('admin_eleicao_encerrar') }}"
+            onsubmit="return confirm('Encerrar a votação e liberar a apuração?');"
+          >
+            <input
+              type="hidden"
+              name="_csrf_token"
+              value="{{ csrf_token('eleicao_encerrar') }}"
+            >
+
+            <button
+              class="dashboard-danger"
+              type="submit"
+            >
+              Encerrar votação
+            </button>
+          </form>
+
+        {% elseif statusEleicao == 'ENCERRADA' %}
+          <p>
+            A eleição foi encerrada.
+            O resultado apurado está disponível abaixo.
+          </p>
+
+          <p>
+            Se desejar realizar outra simulação,
+            você pode iniciar uma nova votação.
+          </p>
+
+          <!-- NOVA FUNCIONALIDADE: REINICIAR VOTAÇÃO -->
+          <form
+            method="post"
+            action="{{ path('admin_nova_votacao') }}"
+            class="new-election-form"
+            onsubmit="return confirm('ATENÇÃO: todos os votos da simulação anterior serão excluídos permanentemente. Deseja criar uma nova votação?');"
+          >
+            <input
+              type="hidden"
+              name="_csrf_token"
+              value="{{ csrf_token('nova_votacao') }}"
+            >
+
+            <button
+              type="submit"
+              class="new-election-button"
+            >
+              ↻ Nova votação
+            </button>
+          </form>
+
+        {% else %}
+          <p>
+            Não foi possível identificar o estado da votação.
+          </p>
+        {% endif %}
+      </article>
+
+      <article class="dashboard-panel">
+        <div class="dashboard-panel-head">
+          <span class="dashboard-eyebrow">02 / GESTÃO</span>
+          <h2>Candidatos e usuários</h2>
+        </div>
+
+        <p>
+          Associe um eleitor a uma candidatura
+          e defina seu número de dois dígitos
+          antes de começar a votação.
+        </p>
+
+        {% if statusEleicao == 'PENDENTE' %}
+          <a
+            class="dashboard-primary"
+            href="{{ path('admin_candidatos') }}"
+          >
+            Gerenciar candidatos →
+          </a>
+        {% else %}
+          <span class="dashboard-disabled">
+            Candidaturas bloqueadas após abertura
+          </span>
+        {% endif %}
+
+        <a
+          class="dashboard-secondary"
+          href="{{ path('admin_registrar') }}"
+        >
+          Registrar novo usuário
+        </a>
+      </article>
+    </section>
+
+    <section class="dashboard-panel dashboard-results">
+      <div class="dashboard-panel-head">
+        <span class="dashboard-eyebrow">03 / APURAÇÃO</span>
+        <h2>Resultado da eleição</h2>
+      </div>
+
+      {% if statusEleicao != 'ENCERRADA' %}
+        <div class="dashboard-locked">
+          🔒 Resultado indisponível até o encerramento.
+          Somente a participação é mostrada durante a votação.
+        </div>
+
+      {% elseif erroApuracao %}
+        <div
+          class="dashboard-alert dashboard-alert-error"
+          role="alert"
+        >
+          {{ erroApuracao }}
+        </div>
+
+      {% else %}
+        <div class="dashboard-table-scroll">
+          <table class="dashboard-results-table">
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Candidato</th>
+                <th>Partido</th>
+                <th>Votos</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for candidato in candidatos %}
+                {% set numero = '%02d'|format(candidato.numero) %}
+
+                <tr>
+                  <td>
+                    <b class="dashboard-number">
+                      {{ numero }}
+                    </b>
+                  </td>
+
+                  <td>{{ candidato.nome }}</td>
+
+                  <td>{{ candidato.partido }}</td>
+
+                  <td>
+                    <b>{{ resultado[numero] ?? 0 }}</b>
+                  </td>
+                </tr>
+              {% endfor %}
+
+              <tr>
+                <td>—</td>
+
+                <td colspan="2">
+                  Votos em branco
+                </td>
+
+                <td>
+                  <b>{{ brancos }}</b>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="dashboard-footnote">
+          Total de cédulas contabilizadas: {{ participantes }}.
+          A apuração valida cada cédula antes
+          de apresentar os resultados.
+        </p>
+      {% endif %}
+    </section>
+  </main>
+
+  <footer class="dashboard-footer">
+    URNA DIGITAL · PROJETO ACADÊMICO ·
+    O SIGILO DA ESCOLHA DEVE SER PRESERVADO
+  </footer>
+</div>
+</body>
+</html>

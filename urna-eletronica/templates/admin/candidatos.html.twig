@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Candidatos — Urna Digital</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ asset('registro.css') }}?v=3"
+    >
+    <link
+        rel="stylesheet"
+        href="{{ asset('candidatos.css') }}?v=1"
+    >
+</head>
+
+<body>
+    <main class="candidates-container">
+        <div class="candidates-header">
+            <div>
+                <span class="page-kicker">
+                    PAINEL ADMINISTRATIVO / ELEIÇÃO
+                </span>
+
+                <h1>Gerenciar candidatos</h1>
+
+                <p class="subtitle">
+                    Cadastre candidatos a partir dos eleitores
+                    existentes no sistema.
+                </p>
+            </div>
+
+            <a
+                href="{{ path('admin_dashboard') }}"
+                class="candidates-back-link"
+            >
+                ← Voltar ao painel
+            </a>
+        </div>
+
+        <div class="candidates-layout">
+            <section class="register-card candidates-form-card">
+                <h2>Nova candidatura</h2>
+
+                {% for mensagem in app.flashes('success') %}
+                    <div class="alert alert-success" role="status">
+                        {{ mensagem }}
+                    </div>
+                {% endfor %}
+
+                {% if erro %}
+                    <div class="alert alert-error" role="alert">
+                        {{ erro }}
+                    </div>
+                {% endif %}
+
+                <form
+                    method="post"
+                    action="{{ path('admin_candidatos') }}"
+                >
+                    <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value="{{ csrf_token('cadastrar_candidato') }}"
+                    >
+
+                    <div class="form-group">
+                        <label for="eleitor_id">Eleitor candidato</label>
+
+                        <select
+                            id="eleitor_id"
+                            name="eleitor_id"
+                            required
+                        >
+                            <option value="">
+                                Selecione um eleitor
+                            </option>
+
+                            {% for eleitor in eleitoresDisponiveis %}
+                                <option value="{{ eleitor.id }}">
+                                    {{ eleitor.nome }}
+                                    — {{ eleitor.tituloEleitor }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="partido">Partido</label>
+
+                        <input
+                            id="partido"
+                            type="text"
+                            name="partido"
+                            maxlength="100"
+                            placeholder="Ex.: Partido Verde"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numero">Número de votação</label>
+
+                        <input
+                            id="numero"
+                            type="text"
+                            name="numero"
+                            inputmode="numeric"
+                            pattern="[0-9]{2}"
+                            minlength="2"
+                            maxlength="2"
+                            placeholder="Ex.: 13"
+                            required
+                        >
+
+                        <small>
+                            Informe exatamente dois dígitos.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cargo">Cargo</label>
+
+                        <input
+                            id="cargo"
+                            type="text"
+                            name="cargo"
+                            maxlength="100"
+                            value="Representante"
+                            required
+                        >
+                    </div>
+
+                    <button
+                        class="register-button"
+                        type="submit"
+                        {% if eleitoresDisponiveis is empty %}disabled{% endif %}
+                    >
+                        Cadastrar candidato
+                    </button>
+                </form>
+            </section>
+
+            <section class="candidates-list-card">
+                <div class="candidates-list-heading">
+                    <div>
+                        <span class="page-kicker">
+                            CANDIDATURAS REGISTRADAS
+                        </span>
+                        <h2>Candidatos</h2>
+                    </div>
+
+                    <span class="candidates-count">
+                        {{ candidatos|length }} cadastrados
+                    </span>
+                </div>
+
+                {% if candidatos is empty %}
+                    <p class="candidates-empty">
+                        Nenhum candidato cadastrado até o momento.
+                    </p>
+                {% else %}
+                    <div class="candidates-table-scroll">
+                        <table class="candidates-table">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Candidato</th>
+                                    <th>Partido</th>
+                                    <th>Cargo</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for candidato in candidatos %}
+                                    <tr>
+                                        <td>
+                                            <span class="candidate-number">
+                                                {{ '%02d'|format(candidato.numero) }}
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <strong>{{ candidato.nome }}</strong>
+                                        </td>
+
+                                        <td>
+                                            {{ candidato.partido ?? 'Não informado' }}
+                                        </td>
+
+                                        <td>
+                                            {{ candidato.cargo }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </section>
+        </div>
+    </main>
+</body>
+</html>

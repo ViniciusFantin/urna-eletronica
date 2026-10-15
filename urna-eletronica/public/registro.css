@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+:root { --ink:#111b22; --teal:#0f766e; --teal-hover:#095c55; --canvas:#e8e6df; --muted:#728084; --line:#d7dcde; --sans:'Space Grotesk',sans-serif; --mono:'DM Mono',monospace; }
+* { box-sizing:border-box; }
+body { margin:0; min-height:100vh; background:radial-gradient(circle at 18% 8%,rgba(255,255,255,.78),transparent 28rem),linear-gradient(140deg,#ecebe5 0%,var(--canvas) 58%,#dfe0d8 100%); color:var(--ink); font-family:var(--sans); }
+.register-container { width:100%; min-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:36px 20px; }
+.register-card { width:100%; max-width:490px; padding:42px; background:#fff; border:1px solid rgba(17,27,34,.08); border-radius:14px; box-shadow:0 20px 60px rgba(17,27,34,.08); }
+.logo { margin-bottom:25px; font-size:25px; font-weight:700; letter-spacing:-1px; }
+.logo span { color:var(--teal); }
+.page-kicker { margin-bottom:12px; color:var(--teal); font-family:var(--mono); font-size:10px; letter-spacing:.08em; }
+h1 { margin:0 0 10px; font-size:29px; letter-spacing:-.04em; }
+.subtitle { margin:0 0 28px; color:#69777d; font-size:14px; line-height:1.6; }
+.form-group { margin-bottom:20px; }
+label { display:block; margin-bottom:8px; font-size:13px; font-weight:700; }
+input,select { display:block; width:100%; padding:14px; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); font-family:var(--sans); font-size:14px; }
+input:focus,select:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(15,118,110,.12); }
+.form-group small { display:block; margin-top:8px; color:var(--muted); font-size:11px; line-height:1.5; }
+.register-button { width:100%; margin-top:5px; padding:15px; border:none; border-radius:7px; background:var(--teal); color:white; font-family:var(--sans); font-size:14px; font-weight:700; cursor:pointer; transition:background .2s ease; }
+.register-button:hover { background:var(--teal-hover); }
+.register-button:focus-visible,.back-link:focus-visible { outline:3px solid #e88a38; outline-offset:3px; }
+.back-link { display:block; margin-top:24px; color:var(--teal); text-align:center; text-decoration:none; font-size:13px; font-weight:600; }
+.back-link:hover { text-decoration:underline; }
+.alert { margin-bottom:22px; padding:13px 15px; border-radius:7px; font-size:13px; line-height:1.5; }
+.alert-success { background:#e4f5ee; color:#146347; }
+.alert-error { background:#fff0f0; color:#a52a2a; }
+.page-footer { margin-top:24px; color:#899397; font-family:var(--mono); font-size:10px; text-align:center; letter-spacing:.05em; }
+@media (max-width:520px) { .register-container { padding:20px 14px; } .register-card { padding:28px 22px; } h1 { font-size:25px; } }

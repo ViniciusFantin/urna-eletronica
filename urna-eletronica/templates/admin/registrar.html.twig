@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Registrar Usuário — Urna Digital</title>
+
+    <link rel="stylesheet" href="{{ asset('registro.css') }}?v=2">
+</head>
+
+<body>
+    <main class="register-container">
+        <section class="register-card">
+
+            <div class="logo">
+                URNA <span>DIGITAL</span>
+            </div>
+
+            <div class="page-kicker">
+                PAINEL ADMINISTRATIVO / REGISTRO
+            </div>
+
+            <h1>Registrar usuário</h1>
+
+            <p class="subtitle">
+                Cadastre um novo eleitor ou mesário para acessar
+                o sistema de votação.
+            </p>
+
+            {% for mensagem in app.flashes('success') %}
+                <div class="alert alert-success" role="status">
+                    {{ mensagem }}
+                </div>
+            {% endfor %}
+
+            {% if erro %}
+                <div class="alert alert-error" role="alert">
+                    {{ erro }}
+                </div>
+            {% endif %}
+
+            <form
+                method="POST"
+                action="{{ path('admin_registrar') }}"
+            >
+                <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value="{{ csrf_token('registrar_usuario') }}"
+                >
+
+                <div class="form-group">
+                    <label for="nome">Nome completo</label>
+                    <input
+                        type="text"
+                        id="nome"
+                        name="nome"
+                        placeholder="Digite o nome completo"
+                        value="{{ dados.nome }}"
+                        maxlength="150"
+                        autocomplete="name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="tituloEleitor">Título de eleitor</label>
+                    <input
+                        type="text"
+                        id="tituloEleitor"
+                        name="tituloEleitor"
+                        placeholder="12 dígitos"
+                        value="{{ dados.tituloEleitor }}"
+                        inputmode="numeric"
+                        pattern="[0-9]{12}"
+                        minlength="12"
+                        maxlength="12"
+                        autocomplete="off"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="perfil">Perfil de acesso</label>
+
+                    <select id="perfil" name="perfil" required>
+                        <option
+                            value="ROLE_ELEITOR"
+                            {% if dados.perfil == 'ROLE_ELEITOR' %}selected{% endif %}
+                        >
+                            Eleitor
+                        </option>
+
+                        <option
+                            value="ROLE_ADMIN"
+                            {% if dados.perfil == 'ROLE_ADMIN' %}selected{% endif %}
+                        >
+                            Mesário / Administrador
+                        </option>
+                    </select>
+
+                    <small>
+                        Mesários podem acessar a urna e o painel administrativo.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="senha">Senha</label>
+                    <input
+                        type="password"
+                        id="senha"
+                        name="senha"
+                        placeholder="Mínimo de 12 caracteres"
+                        minlength="12"
+                        autocomplete="new-password"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmarSenha">Confirmar senha</label>
+                    <input
+                        type="password"
+                        id="confirmarSenha"
+                        name="confirmarSenha"
+                        placeholder="Digite a senha novamente"
+                        minlength="12"
+                        autocomplete="new-password"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="register-button">
+                    Registrar usuário
+                </button>
+            </form>
+
+            <a
+                href="{{ path('admin_dashboard') }}"
+                class="back-link"
+            >
+                ← Voltar ao painel do mesário
+            </a>
+        </section>
+
+        <p class="page-footer">
+            URNA DIGITAL · PROJETO ACADÊMICO
+        </p>
+    </main>
+</body>
+</html>
