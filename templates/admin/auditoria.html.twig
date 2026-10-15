@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Auditoria dos Votos</title>
+    <link rel="stylesheet" href="{{ asset('dashboard.css') }}">
+</head>
+<body>
+    <main style="max-width:1100px;margin:40px auto;padding:20px;">
+
+        <a href="{{ path('admin_dashboard') }}">
+            ← Voltar ao painel
+        </a>
+
+        <h1>Auditoria dos votos</h1>
+
+        <p>
+            Verificação da integridade dos eventos registrados
+            utilizando uma cadeia de hashes SHA-256.
+        </p>
+
+        <h2>
+            Integridade:
+            {% if integro %}
+                <span style="color:green">ÍNTEGRA</span>
+            {% else %}
+                <span style="color:red">FALHA DETECTADA</span>
+            {% endif %}
+        </h2>
+
+        <p>Total de eventos: {{ registros|length }}</p>
+
+        <div style="overflow-x:auto;">
+            <table border="1" cellpadding="10"
+                   style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Evento</th>
+                        <th>Data</th>
+                        <th>Hash anterior</th>
+                        <th>Hash atual</th>
+                        <th>Integridade</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for registro in registros %}
+                        <tr>
+                            <td>{{ registro.id }}</td>
+                            <td>{{ registro.event }}</td>
+                            <td>{{ registro.created_at }}</td>
+
+                            <td style="font-family:monospace;font-size:11px;">
+                                {{ registro.previous_hash ?? 'INÍCIO' }}
+                            </td>
+
+                            <td style="font-family:monospace;font-size:11px;">
+                                {{ registro.current_hash }}
+                            </td>
+
+                            <td>
+                                {% if registro.integro %}
+                                    <span style="color:green">VÁLIDO</span>
+                                {% else %}
+                                    <span style="color:red">ALTERADO</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6">
+                                Nenhum evento registrado.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <p>
+            <small>
+                Este relatório não armazena a identidade do votante
+                nem a escolha individual.
+            </small>
+        </p>
+    </main>
+</body>
+</html>
